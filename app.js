@@ -24,6 +24,13 @@ const USERS = [
   }
 ];
 
+// Mapeamento de perfil para rótulo legível
+const ROLE_LABELS = {
+  ALUNO: "Aluno",
+  PROFESSOR: "Professor",
+  ADMIN: "Administrador"
+};
+
 const FAKE_API_TOKEN = "TOKEN_SECRETO_DEMO_ABC123_PUBLICO_NO_FRONTEND";
 
 const STORAGE_KEYS = {
@@ -77,6 +84,21 @@ const INITIAL_OCCURRENCES = [
     status: "Aberta",
     createdBy: "admin@faculdade.local",
     createdAt: "2026-05-05T19:00:00.000Z"
+  },
+  {
+    id: "OC-1004",
+    studentName: "Ana Souza",
+    studentId: "202400001",
+    studentCpf: "444.555.666-77",
+    studentEmail: "aluno@faculdade.local",
+    studentPhone: "(47) 96666-4040",
+    category: "Nota",
+    priority: "Média",
+    description: "Solicitação de revisão de nota da prova substitutiva.",
+    internalNote: "Aguardando retorno da coordenação.",
+    status: "Aberta",
+    createdBy: "professor@faculdade.local",
+    createdAt: "2026-05-06T10:00:00.000Z"
   }
 ];
 
@@ -89,7 +111,7 @@ const exportBtn = document.querySelector("#exportBtn");
 const clearLogsBtn = document.querySelector("#clearLogsBtn");
 const resetBtn = document.querySelector("#resetBtn");
 const searchInput = document.querySelector("#search");
-const roleSelect = document.querySelector("#roleSelect");
+const roleLabel = document.querySelector("#roleLabel");
 
 const sessionBadge = document.querySelector("#sessionBadge");
 const currentUserName = document.querySelector("#currentUserName");
@@ -177,13 +199,15 @@ function showApp(user) {
   appView.classList.remove("hidden");
   logoutBtn.classList.remove("hidden");
 
-  sessionBadge.textContent = `${user.name} — ${user.role}`;
+  const roleName = ROLE_LABELS[user.role] || user.role;
+  sessionBadge.textContent = `${user.name} — ${roleName}`;
   sessionBadge.classList.remove("muted");
 
   currentUserName.textContent = user.name;
-  currentUserDetails.textContent = `${user.email} | Perfil: ${user.role}`;
-  roleSelect.value = user.role;
+  currentUserDetails.textContent = user.email;
+  if (roleLabel) roleLabel.textContent = `Perfil: ${roleName}`;
 
+  applyRBAC(user.role);
   render();
 }
 
@@ -208,17 +232,20 @@ function logout() {
   showLogin();
 }
 
-function changeRole(newRole) {
-  const session = getSession();
+// RBAC: controla visibilidade de elementos conforme o perfil do usuário logado
+function applyRBAC(role) {
+  const occurrenceFormCard = document.querySelector("#occurrenceFormCard");
 
-  if (!session) {
-    return;
+  // Formulário de nova ocorrência: apenas PROFESSOR e ADMIN podem cadastrar
+  if (occurrenceFormCard) {
+    occurrenceFormCard.classList.toggle("hidden", role === "ALUNO");
   }
 
-  session.role = newRole;
-  saveSession(session);
-  writeLog("PERFIL_ALTERADO", `Perfil ativo alterado manualmente para ${newRole}.`);
-  showApp(session);
+  // Exportar dados: apenas ADMIN
+  exportBtn.classList.toggle("hidden", role !== "ADMIN");
+
+  // Limpar logs: apenas ADMIN
+  clearLogsBtn.classList.toggle("hidden", role !== "ADMIN");
 }
 
 function createOccurrence(event) {
@@ -322,19 +349,44 @@ function resetData() {
 }
 
 function render() {
+  const session = getSession();
+  const role = session ? session.role : null;
   const term = searchInput.value.toLowerCase();
   const occurrences = getOccurrences();
 
-  const filtered = occurrences.filter((item) => {
+  // RBAC: ALUNO só visualiza ocorrências em que é o estudante cadastrado
+  let visibleOccurrences = occurrences;
+  if (role === "ALUNO" && session) {
+    visibleOccurrences = occurrences.filter((item) =>
+      item.studentEmail === session.email ||
+      item.studentId === session.studentId
+    );
+  }
+
+  const filtered = visibleOccurrences.filter((item) => {
     const content = JSON.stringify(item).toLowerCase();
     return content.includes(term);
   });
 
-  totalOccurrences.textContent = occurrences.length;
-  criticalOccurrences.textContent = occurrences.filter((item) => item.priority === "Crítica").length;
+  totalOccurrences.textContent = visibleOccurrences.length;
+  criticalOccurrences.textContent = visibleOccurrences.filter((item) => item.priority === "Crítica").length;
   lastUpdate.textContent = `Atualizado em ${new Date().toLocaleTimeString("pt-BR")}`;
 
-  occurrencesTable.innerHTML = filtered.map((item) => `
+  occurrencesTable.innerHTML = filtered.map((item) => {
+    // Botões de ação conforme perfil (RBAC)
+    const canChangeStatus = role === "PROFESSOR" || role === "ADMIN";
+    const canDelete = role === "ADMIN";
+
+    const actionButtons = [];
+    if (canChangeStatus) {
+      actionButtons.push(`<button class="btn secondary" onclick="changeStatus('${item.id}', 'Em análise')">Em análise</button>`);
+      actionButtons.push(`<button class="btn secondary" onclick="changeStatus('${item.id}', 'Resolvida')">Resolver</button>`);
+    }
+    if (canDelete) {
+      actionButtons.push(`<button class="btn danger" onclick="deleteOccurrence('${item.id}')">Excluir</button>`);
+    }
+
+    return `
     <tr>
       <td>
         <strong>${item.studentName}</strong><br />
@@ -354,13 +406,12 @@ function render() {
       </td>
       <td>
         <div class="row-actions">
-          <button class="btn secondary" onclick="changeStatus('${item.id}', 'Em análise')">Em análise</button>
-          <button class="btn secondary" onclick="changeStatus('${item.id}', 'Resolvida')">Resolver</button>
-          <button class="btn danger" onclick="deleteOccurrence('${item.id}')">Excluir</button>
+          ${actionButtons.join("")}
+          ${actionButtons.length === 0 ? '<span class="muted-text">Somente leitura</span>' : ""}
         </div>
       </td>
-    </tr>
-  `).join("");
+    </tr>`;
+  }).join("");
 
   const logs = getAuditLogs();
 
@@ -392,7 +443,6 @@ exportBtn.addEventListener("click", exportEverything);
 clearLogsBtn.addEventListener("click", clearLogs);
 resetBtn.addEventListener("click", resetData);
 searchInput.addEventListener("input", render);
-roleSelect.addEventListener("change", (event) => changeRole(event.target.value));
 
 window.deleteOccurrence = deleteOccurrence;
 window.changeStatus = changeStatus;
