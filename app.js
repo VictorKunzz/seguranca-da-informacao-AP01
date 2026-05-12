@@ -31,7 +31,18 @@ const ROLE_LABELS = {
   ADMIN: "Administrador"
 };
 
-const FAKE_API_TOKEN = "TOKEN_SECRETO_DEMO_ABC123_PUBLICO_NO_FRONTEND";
+// A2 — Risco 4: mascaramento de CPF para perfis não-ADMIN
+// Formato exibido: ***.XXX.XXX-** (grupos centrais visíveis, extremos mascarados)
+function maskCpf(cpf) {
+  if (!cpf) return "—";
+  const match = cpf.match(/^(\d{3})\.(\d{3})\.(\d{3})-(\d{2})$/);
+  if (match) return "***."+match[2]+"."+match[3]+"-**";
+  return "***.***.***-**";
+}
+
+// A2 — Risco 12: token removido do código-fonte.
+// Em produção, credenciais seriam gerenciadas no back-end via variável de ambiente.
+const FAKE_API_TOKEN = "";
 
 const STORAGE_KEYS = {
   session: "ocorrencias_sessao",
@@ -310,14 +321,13 @@ function changeStatus(id, status) {
 }
 
 function exportEverything() {
+  const session = getSession();
+  // A2 — Risco 5: exportação sanitizada — sem senhas, token ou cópia do localStorage
   const payload = {
     exportedAt: new Date().toISOString(),
-    exportedBy: getSession(),
-    token: FAKE_API_TOKEN,
-    users: USERS,
+    exportedBy: session ? { name: session.name, email: session.email, role: session.role } : null,
     occurrences: getOccurrences(),
-    audit: getAuditLogs(),
-    localStorageCopy: { ...localStorage }
+    audit: getAuditLogs()
   };
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -386,13 +396,21 @@ function render() {
       actionButtons.push(`<button class="btn danger" onclick="deleteOccurrence('${item.id}')">Excluir</button>`);
     }
 
+    // A2 — Risco 4: CPF mascarado para não-ADMIN
+    const cpfDisplay = (role === "ADMIN") ? item.studentCpf : maskCpf(item.studentCpf);
+
+    // A2 — Risco 4: Obs. interna oculta para ALUNO
+    const internalNoteHtml = (role !== "ALUNO" && item.internalNote)
+      ? "<br /><strong>Obs. interna:</strong> " + item.internalNote
+      : "";
+
     return `
     <tr>
       <td>
         <strong>${item.studentName}</strong><br />
         <span class="muted-text">${item.studentId}</span>
       </td>
-      <td>${item.studentCpf}</td>
+      <td>${cpfDisplay}</td>
       <td>
         ${item.studentEmail}<br />
         ${item.studentPhone}
@@ -401,8 +419,7 @@ function render() {
       <td><span class="priority ${item.priority}">${item.priority}</span></td>
       <td>${item.status}</td>
       <td>
-        <strong>Descrição:</strong> ${item.description}<br />
-        <strong>Obs. interna:</strong> ${item.internalNote}
+        <strong>Descrição:</strong> ${item.description}${internalNoteHtml}
       </td>
       <td>
         <div class="row-actions">
