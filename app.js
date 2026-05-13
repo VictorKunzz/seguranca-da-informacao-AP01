@@ -1,3 +1,7 @@
+// A5 — Risco 6: Arquitetura 100% front-end. A integridade dos logs no localStorage
+// não pode ser forçada tecnicamente contra manipulações diretas via DevTools.
+// Essa limitação está mapeada no Relatório Técnico.
+
 const USERS = [
   {
     id: 1,
@@ -435,9 +439,24 @@ function render() {
     );
   }
 
+  // A5 — Risco 11: busca segura — monta string pesquisável conforme perfil,
+  // impedindo que dados ocultos na interface sejam descobertos via campo de busca
   const filtered = visibleOccurrences.filter((item) => {
-    const content = JSON.stringify(item).toLowerCase();
-    return content.includes(term);
+    const parts = [
+      item.id, item.studentName, item.studentId,
+      item.studentEmail, item.studentPhone,
+      item.category, item.priority, item.status,
+      item.description, item.createdBy
+    ];
+    if (role === "ADMIN") {
+      parts.push(item.studentCpf, item.internalNote);
+    } else if (role === "PROFESSOR") {
+      parts.push(maskCpf(item.studentCpf), item.internalNote);
+    } else {
+      parts.push(maskCpf(item.studentCpf));
+    }
+    const searchableContent = parts.join(" ").toLowerCase();
+    return searchableContent.includes(term);
   });
 
   totalOccurrences.textContent = visibleOccurrences.length;
