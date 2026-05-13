@@ -262,6 +262,22 @@ function applyRBAC(role) {
 function createOccurrence(event) {
   event.preventDefault();
 
+  // A3 — Risco 9: validação de campos obrigatórios
+  const studentName = document.querySelector("#studentName").value.trim();
+  const studentId   = document.querySelector("#studentId").value.trim();
+  const description = document.querySelector("#description").value.trim();
+  const privacyAck  = document.querySelector("#privacyAck").checked;
+
+  if (!studentName || !studentId || !description) {
+    alert("Preencha os campos obrigatórios: Nome do aluno, Matrícula e Descrição.");
+    return;
+  }
+
+  if (!privacyAck) {
+    alert("É necessário marcar o consentimento de privacidade para registrar a ocorrência.");
+    return;
+  }
+
   const session = getSession();
 
   const occurrence = {
@@ -295,6 +311,11 @@ function createOccurrence(event) {
 }
 
 function deleteOccurrence(id) {
+  // A3 — Risco 10: confirmação obrigatória antes de excluir
+  if (!confirm("Tem certeza que deseja excluir esta ocorrência? Esta ação não pode ser desfeita.")) {
+    return;
+  }
+
   const occurrences = getOccurrences();
   const occurrence = occurrences.find((item) => item.id === id);
   const updated = occurrences.filter((item) => item.id !== id);
