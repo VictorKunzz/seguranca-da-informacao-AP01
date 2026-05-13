@@ -1,5 +1,8 @@
 # Sistema de Ocorrências Acadêmicas — Refatoração de Segurança
 
+> **⚠️ AVISO IMPORTANTE: NÃO UTILIZE EM PRODUÇÃO**  
+> Este sistema é um protótipo estritamente didático e **não deve ser utilizado com dados reais**. Da forma como foi concebido, e apesar das mitigações aplicadas na camada de apresentação (Front-end), a arquitetura carece de servidor isolado e possui vulnerabilidades estruturais críticas (como persistência local manipulável e autenticação falsa) que tornam o seu uso produtivo altamente inseguro. As vulnerabilidades e limitações remanescentes estão detalhadas no **Item 5** deste documento.
+
 **Disciplina:** Segurança da Informação (5º Semestre - Engenharia de Software)  
 **Autor:** Victor Henrique Kunz de Souza  
 **Instituição:** Católica SC - Joinville  
@@ -75,9 +78,14 @@ A validação de campos obrigatórios com `.trim()` protege o sistema contra ent
 
 ---
 
-## 5. Limitações da Arquitetura Front-end
+## 5. Limitações da Solução Entregue e Vulnerabilidades Residuais
 
-As medidas descritas representam defesas profundas em camada de apresentação (*Client-side*). No entanto, um aplicativo que opera unicamente sem Back-end e sem Banco de Dados isolado apresenta fraquezas estruturais intrínsecas:
+As medidas descritas ao longo deste documento representam mitigações possíveis na camada de apresentação (*Client-side*), mas não configuram soluções de segurança definitivas para ambientes de produção. Uma arquitetura *Front-end only* impõe limites intransponíveis que exigem uma infraestrutura de *Back-end* e Banco de Dados para serem superados.
 
-1. **Quebra de Integridade na Auditoria (Risco 6):** Os dados (sessão, ocorrências e logs de auditoria) residem no `localStorage`. Sendo assim, podem ser livremente apagados ou forjados por ferramentas de desenvolvedor (DevTools) no navegador local do usuário, rompendo a confiabilidade técnica dos registros.
-2. **Autenticação Simulada:** O sistema não troca chaves de sessão assinadas criptograficamente (como JWT), confiando apenas em validações e persistências locais, o que impede uma defesa rigorosa contra manipulação de estados.
+As principais vulnerabilidades não resolvidas pelo escopo restrito deste projeto incluem:
+
+1. **Autenticação Insegura (Codificação Reversível):** O sistema não possui autenticação real. As credenciais de usuário armazenadas no array interno são apenas ofuscadas em *Base64*, uma codificação trivialmente reversível via função `atob()` no console. A adoção de Hashing seguro (bcrypt/Argon2) é impossível no *Client-side*, pois requer processamento e persistência isolada no servidor.
+2. **Sessão Vulnerável e XSS:** Como o controle de sessão e os dados de aplicação residem no `localStorage`, qualquer script executado na página (vulnerabilidade a XSS) ou o próprio usuário via DevTools (F12) tem acesso irrestrito aos dados, podendo lê-los ou forjá-los livremente. Um cenário seguro exige a emissão de tokens protegidos em cookies *HttpOnly*.
+3. **Quebra de Integridade na Auditoria (Risco 6):** Os logs de rastreabilidade gravados diretamente na máquina do usuário não possuem imutabilidade. Eles podem ser apagados ou adulterados pontualmente, sem deixar rastro, quebrando o pilar de integridade fundamental para qualquer sistema de auditoria confiável.
+4. **RBAC Totalmente Contornável:** O Controle de Acesso Baseado em Perfis (RBAC) é validado apenas pelo JavaScript local da máquina do usuário. Apesar das *Guard Clauses* barrarem usuários leigos, um usuário com conhecimentos de programação pode modificar as variáveis de sessão em tempo de execução para contornar restrições, já que não há um servidor interceptando e validando ativamente os privilégios a cada requisição HTTP.
+5. **Falta de Criptografia em Repouso:** Dados pessoais acadêmicos requerem armazenamento persistente criptografado em banco de dados isolado. Tais propriedades são impossíveis de garantir via navegador, configurando risco de não-conformidade severa com a LGPD caso este software operasse comercialmente.
