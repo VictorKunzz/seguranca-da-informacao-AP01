@@ -1,365 +1,83 @@
-# Sistema de Ocorrências Acadêmicas — Protótipo Didático
+# Sistema de Ocorrências Acadêmicas — Refatoração de Segurança
 
-Protótipo web desenvolvido para atividade prática da disciplina **Segurança da Informação**.
-
-O sistema simula um pequeno painel acadêmico usado para registrar, consultar e acompanhar ocorrências relacionadas a alunos. Ele foi construído com **HTML, CSS e JavaScript puro**, sem dependências externas, com o objetivo de permitir uma análise prática de decisões de segurança em uma aplicação simples.
-
-> **Aviso importante:** este projeto é exclusivamente didático. Não insira dados reais. Não utilize este código como base para um sistema de produção.
-
----
-
-## 1. Objetivo do projeto
-
-Este sistema foi criado para apoiar uma atividade prática de análise e melhoria de segurança em aplicações web.
-
-A proposta é que os estudantes analisem um sistema existente, compreendam suas regras de negócio, identifiquem ativos e dados relevantes, avaliem riscos e proponham melhorias de segurança coerentes com os conteúdos estudados na disciplina.
-
-O foco da atividade não é desenvolver um sistema completo do zero, mas trabalhar sobre um protótipo já funcional, observando como decisões aparentemente simples de implementação podem afetar confidencialidade, integridade, disponibilidade, rastreabilidade, privacidade e controle de acesso.
+**Disciplina:** Segurança da Informação (5º Semestre - Engenharia de Software)  
+**Autor:** Victor Henrique Kunz de Souza  
+**Instituição:** Católica SC - Joinville  
+**Acesso ao Sistema:** [https://victorkunzz.github.io/seguranca-da-informacao-AP01/](https://victorkunzz.github.io/seguranca-da-informacao-AP01/)
 
 ---
 
-## 2. Cenário do sistema
+## 1. Sobre o Projeto
 
-Uma instituição de ensino utiliza um painel interno para registrar ocorrências acadêmicas.
+Este repositório é um *fork* de um protótipo didático de sistema de ocorrências acadêmicas. O projeto original foi fornecido com diversas vulnerabilidades de segurança estruturais e arquiteturais propositais no código-fonte (front-end).
 
-Essas ocorrências podem envolver, por exemplo:
-
-- solicitação de revisão de nota;
-- contestação de frequência;
-- demanda administrativa;
-- observações internas sobre o atendimento;
-- priorização de casos que exigem acompanhamento.
-
-O sistema possui três perfis de uso simulados:
-
-- **Aluno**: representa um estudante que acessa informações acadêmicas relacionadas a ocorrências;
-- **Professor**: representa um docente que acompanha ou registra ocorrências acadêmicas;
-- **Administrador**: representa um usuário com atribuições mais amplas sobre o painel.
-
-A aplicação contém dados fictícios e usuários de demonstração apenas para facilitar a atividade.
+O objetivo desta atividade acadêmica foi analisar a arquitetura existente, identificar os riscos de segurança de acordo com as boas práticas de mercado (Tríade CID, LGPD e Princípio do Menor Privilégio) e implementar controles de mitigação diretamente no código (HTML, CSS e JavaScript puro), simulando as defesas possíveis em uma aplicação que atua exclusivamente na camada cliente.
 
 ---
 
-## 3. Tecnologias utilizadas
+## 2. Estrutura de Arquivos
 
-O projeto foi construído com tecnologias básicas de front-end:
+O projeto não utiliza frameworks externos ou back-end, operando inteiramente no navegador do usuário:
 
 ```text
-HTML5
-CSS3
-JavaScript puro
-Armazenamento local do navegador
-```
-
-Não há uso de frameworks, bibliotecas externas, banco de dados real ou servidor de aplicação.
-
-Essa escolha foi intencional para manter o projeto simples, fácil de publicar e fácil de modificar durante uma aula prática.
-
----
-
-## 4. Estrutura de arquivos
-
-```text
-sistema-ocorrencias-inseguro/
-├── index.html
-├── style.css
-└── app.js
-```
-
-### `index.html`
-
-Contém a estrutura da interface:
-
-- tela de login;
-- painel do usuário autenticado;
-- formulário de cadastro de ocorrência;
-- área de busca;
-- tabela de ocorrências;
-- painel de ações rápidas;
-- área de logs.
-
-### `style.css`
-
-Contém a aparência visual da aplicação:
-
-- layout geral;
-- cards;
-- botões;
-- formulários;
-- tabela;
-- badges;
-- mensagens de aviso;
-- responsividade básica.
-
-### `app.js`
-
-Contém a lógica da aplicação:
-
-- usuários de demonstração;
-- criação de sessão simulada;
-- cadastro de ocorrências;
-- listagem e busca de registros;
-- alteração de status;
-- exclusão de registros;
-- exportação de dados;
-- registro de eventos em logs;
-- restauração da base inicial.
-
----
-
-## 5. Regras de negócio simuladas
-
-O sistema trabalha com a ideia de **ocorrência acadêmica**.
-
-Cada ocorrência possui, em linhas gerais:
-
-- identificação da ocorrência;
-- nome do aluno;
-- matrícula;
-- dados de contato;
-- tipo de ocorrência;
-- prioridade;
-- descrição;
-- observação interna;
-- status;
-- usuário que criou o registro;
-- data de criação.
-
-Os principais status utilizados são:
-
-- **Aberta**;
-- **Em análise**;
-- **Resolvida**.
-
-As principais ações disponíveis no protótipo são:
-
-- entrar no sistema com usuário de demonstração;
-- registrar uma nova ocorrência;
-- pesquisar ocorrências cadastradas;
-- alterar o status de uma ocorrência;
-- excluir uma ocorrência;
-- exportar dados;
-- visualizar registros de logs;
-- restaurar os dados iniciais do protótipo.
-
-Essas regras foram simplificadas para permitir que o estudante concentre a análise em segurança, privacidade, controle de acesso e rastreabilidade.
-
----
-
-## 6. Sobre API e back-end
-
-Este projeto **não possui API real** e **não possui back-end**.
-
-Toda a aplicação roda diretamente no navegador. As operações que, em um sistema real, seriam realizadas por uma API foram simuladas em JavaScript.
-
-Em uma arquitetura real, ações como login, criação de ocorrência, atualização de status, exclusão, consulta de logs e exportação de dados normalmente passariam por uma camada de servidor, por exemplo:
-
-```text
-POST   /login
-GET    /ocorrencias
-POST   /ocorrencias
-PATCH  /ocorrencias/:id/status
-DELETE /ocorrencias/:id
-GET    /logs
-POST   /exportacoes
-```
-
-Neste protótipo, essas operações existem apenas como funções locais no arquivo `app.js`.
-
-A ausência de back-end faz parte do escopo didático da atividade. O grupo deve considerar o que é possível melhorar no front-end e o que, em um sistema real, exigiria servidor, banco de dados, autenticação centralizada, autorização no back-end, controle de sessão e infraestrutura adequada.
-
----
-
-### Persistência de dados
-
-Este projeto não utiliza banco de dados real.
-
-Os dados manipulados pela aplicação são armazenados localmente no navegador, por meio de mecanismos do próprio front-end. Isso permite simular o funcionamento de um sistema com registros, usuários e ações, mas não representa uma persistência segura ou centralizada.
-
-Consequências dessa escolha:
-
-- os dados não são enviados para um servidor;
-- cada navegador possui seus próprios dados;
-- os dados podem ser apagados pelo usuário;
-- não há controle real de integridade;
-- não há auditoria confiável;
-- não há autenticação ou autorização real no servidor;
-- não há banco de dados protegido;
-- não há backup centralizado.
-
-Essa limitação faz parte da proposta didática da atividade. O objetivo é que os alunos analisem quais riscos surgem quando regras de negócio, dados, permissões e controles ficam concentrados apenas no front-end.
-
-## 7. Sobre banco de dados e armazenamento
-
-Este projeto **não utiliza banco de dados real**.
-
-Os dados são armazenados no próprio navegador, por meio de armazenamento local, apenas para que o sistema continue funcionando durante a atividade.
-
-No contexto deste protótipo, o armazenamento local representa uma simulação simplificada de persistência. Em um sistema real, seria necessário projetar uma camada de dados apropriada, com banco de dados, controle de acesso, backup, retenção, logs protegidos e políticas de segurança compatíveis com o tipo de informação tratada.
-
-A base inicial é composta por registros fictícios. O botão de restauração permite voltar ao estado inicial do protótipo.
-
----
-
-## 8. Segurança no escopo do protótipo
-
-Este sistema não deve ser interpretado como uma solução segura ou completa.
-
-Ele foi preparado para permitir uma atividade de análise crítica. Portanto, existem decisões de projeto e implementação que devem ser avaliadas pelos grupos.
-
-Durante a atividade, os estudantes devem observar aspectos como:
-
-- quais ativos existem no sistema;
-- quais dados são tratados;
-- quais dados são pessoais ou potencialmente sensíveis;
-- quais perfis de usuário existem;
-- quais ações cada perfil deveria poder executar;
-- quais informações deveriam ser exibidas ou ocultadas;
-- como o sistema registra ações relevantes;
-- como a sessão é representada;
-- como as operações críticas são tratadas;
-- quais limites existem em uma aplicação apenas front-end.
-
-O objetivo não é transformar este protótipo em um sistema profissional completo, mas propor melhorias coerentes, justificadas e compatíveis com os conceitos estudados.
-
----
-
-
-## 9. Usuários de demonstração
-
-O sistema possui usuários fictícios para fins de teste.
-
-Eles aparecem na própria tela de login do protótipo.
-
-Esses usuários existem apenas para permitir a navegação pela aplicação durante a atividade. Eles não representam um mecanismo real de autenticação.
-
----
-
-## 10. Atividade proposta
-
-A atividade consiste em analisar o sistema, propor melhorias e implementar parte delas no código.
-
-O grupo deverá trabalhar em três frentes:
-
-1. **Análise do sistema**  
-   Compreender o funcionamento geral, identificar ativos, dados tratados, perfis de acesso, fluxos de informação e pontos de atenção.
-
-2. **Implementação de melhorias**  
-   Alterar o HTML, CSS e JavaScript para melhorar aspectos de segurança, privacidade, rastreabilidade, validação, controle de acesso ou clareza operacional.
-
-3. **Justificativa técnica**  
-   Explicar por que cada melhoria foi proposta, qual risco ela reduz e qual conceito da disciplina sustenta a decisão.
-
----
-
-## 11. O que deve ser entregue
-
-Cada grupo deverá entregar:
-
-- o projeto alterado;
-- uma breve descrição das mudanças realizadas;
-- um relatório técnico em PDF;
-- uma tabela relacionando problema identificado, risco, controle proposto e justificativa.
-
-O relatório deverá conter, no mínimo:
-
-1. descrição resumida do sistema;
-2. identificação dos principais ativos;
-3. classificação de pelo menos alguns dados ou ativos;
-4. análise de riscos encontrados;
-5. melhorias implementadas;
-6. melhorias que dependeriam de back-end ou infraestrutura real;
-7. justificativa técnica das decisões;
-8. conclusão do grupo.
-
----
-
-## 12. Tabela sugerida para o relatório
-
-Use uma tabela semelhante a esta:
-
-| Item analisado | Risco associado | Controle ou melhoria proposta | Foi implementado? | Justificativa técnica |
-|---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
-
-A coluna “Foi implementado?” pode ser preenchida com:
-
-```text
-Sim
-Não
-Parcialmente
-Dependeria de back-end
-Dependeria de infraestrutura
+seguranca-da-informacao-AP01/
+├── index.html       (Estrutura da interface, formulários e views)
+├── style.css        (Estilização, layout e responsividade)
+├── app.js           (Lógica de negócio, simulação de banco local e RBAC)
+├── README.md        (Documentação de segurança e escopo do projeto)
+└── LICENSE          (Licença do repositório)
 ```
 
 ---
 
-## 13. Perguntas norteadoras
+## 3. Matriz de Riscos e Controles Implementados
 
-Durante a análise, o grupo pode se orientar pelas seguintes perguntas:
+Durante a análise técnica do sistema original, mapeamos 12 riscos críticos de segurança. Abaixo está o escopo do que foi identificado e como as vulnerabilidades foram mitigadas através da refatoração do código:
 
-- Quais são os ativos mais importantes do sistema?
-- Quais dados exigem maior cuidado?
-- Que informações deveriam ser públicas, internas, confidenciais ou restritas?
-- Que ações deveriam ser permitidas para cada perfil?
-- O sistema diferencia autenticação e autorização?
-- Existem ações que deveriam exigir proteção adicional?
-- Os logs ajudam a reconstruir o que aconteceu?
-- Os dados exibidos são todos necessários para cada perfil?
-- O sistema coleta mais dados do que precisa?
-- O que pode ser corrigido apenas no front-end?
-- O que exigiria obrigatoriamente back-end, banco de dados ou infraestrutura real?
-
-Essas perguntas não devem ser respondidas de forma genérica. O grupo deve relacionar as respostas ao funcionamento concreto do protótipo.
-
----
-
-## 14. Critérios de avaliação
-
-A avaliação considerará:
-
-- compreensão das regras de negócio do sistema;
-- identificação adequada de ativos e dados relevantes;
-- coerência entre risco identificado e controle proposto;
-- qualidade das melhorias implementadas;
-- clareza das justificativas técnicas;
-- reconhecimento dos limites de segurança de uma aplicação front-end;
-- organização do código e da entrega;
-- capacidade de relacionar a prática com os conceitos estudados na disciplina.
+| # | Risco Identificado no Sistema Original | Mitigação / Controle Implementado no Código |
+|---|------------------------------------------|---------------------------------------------|
+| **1** | Senhas em texto puro no código e na tela de login | Remoção das senhas do HTML; ofuscação com Base64 no array `USERS`; comparação via `btoa()` no login. |
+| **2** | Sem diferenciação de permissões entre perfis | Implementação de RBAC via `applyRBAC()` e *Guard Clauses* em todas as funções de negócio críticas. |
+| **3** | Seletor de perfil permite troca livre de *role* | Remoção do seletor de perfil; *role* definida exclusivamente pela sessão autenticada; bloqueio via Console. |
+| **4** | CPF exibido sem mascaramento para todos | Função `maskCpf()` criada para exibir no formato `***.XXX.XXX-**` para não-ADMIN; Observação Interna restrita. |
+| **5** | Exportação de dados massiva vulnerável | Exportação sanitizada no JS: payload contém apenas ocorrências e logs, expurgando senhas, credenciais e usuários. |
+| **6** | Logs no localStorage, editáveis pelo usuário | *Risco arquitetural assumido.* Depende de infraestrutura back-end real para garantir integridade. |
+| **7** | Botão "Limpar logs" sem restrição/confirmação | Inserção de *Guard Clause* (somente ADMIN) + confirmação obrigatória + geração de registro de auditoria inalterável após a limpeza. |
+| **8** | Sessão sem expiração no localStorage | Criação de timeout de inatividade (15 minutos) com reset por interação; limpeza forçada do DOM de login no `logout()`. |
+| **9** | Formulário sem validação de campos obrigatórios | Validação de Nome, Matrícula e Descrição via `.trim()`; exigência de checkbox de consentimento de privacidade. |
+| **10** | Exclusão de registros sem restrição de perfil | Restrição à *role* ADMIN e exigência de aviso de confirmação antes de remover do banco local. |
+| **11** | Busca expõe CPF e dados ocultos (*Data Leakage*) | Construção de uma string de busca segura em memória por perfil, impedindo a pesquisa de campos ocultos na interface. |
+| **12** | Tokens de API expostos no código-fonte | Constante com a chave (`FAKE_API_TOKEN`) removida do repositório front-end. |
 
 ---
 
-## 15. Restrições da atividade
+## 4. Justificativa Técnica das Decisões (Relatório de Segurança)
 
-Durante a atividade:
+### 4.1. Controle de Acesso e Princípio do Menor Privilégio
+A implementação do RBAC (*Role-Based Access Control*) simulado foi a medida estruturante do sistema. O **Princípio do Menor Privilégio** determina que cada usuário deve ter acesso apenas aos recursos estritamente necessários para exercer sua função. No sistema original, todos os perfis tinham acesso irrestrito a todas as funcionalidades.
 
-- não use dados reais;
-- não transforme o projeto em outro sistema;
-- não remova funcionalidades sem justificar;
-- não use bibliotecas externas sem necessidade;
-- não implemente back-end, salvo se o professor autorizar;
-- não copie respostas prontas de ferramentas externas sem análise própria;
-- não entregue apenas alterações visuais como se fossem melhorias de segurança.
+A correção foi aplicada em duas camadas complementares:
+1. **Camada de Interface:** A função `applyRBAC(role)` oculta elementos HTML conforme o perfil logado (ex: o botão de exportação e a seção de auditoria são ocultados para alunos).
+2. **Camada Lógica:** *Guard Clauses* foram inseridas no topo de cada função crítica (`deleteOccurrence`, `exportEverything`, `createOccurrence`), garantindo que mesmo que um usuário mal-intencionado force a execução via Console do navegador, o sistema valide a autorização da sessão e bloqueie a tentativa.
 
-Melhorias visuais podem ser feitas, mas elas devem estar acompanhadas de melhorias funcionais, organizacionais ou de segurança.
+### 4.2. Proteção de Dados Pessoais e LGPD
+A Lei Geral de Proteção de Dados (LGPD) classifica o CPF como dado pessoal e exige princípios de necessidade e adequação. A criação do método `maskCpf()` preserva apenas os dígitos centrais para identificação parcial. Além disso, o campo de Observação Interna foi ocultado da renderização do perfil ALUNO. Essa decisão atende ao pilar da **Confidencialidade** da Tríade CID, garantindo que dados sensíveis sejam acessíveis apenas a quem tem necessidade legítima.
+
+### 4.3. Busca Segura e Prevenção de Data Leakage
+A vulnerabilidade mais crítica do protótipo estava na função de busca, que utilizava `JSON.stringify(item)` para pesquisar os termos. Isso criava um vazamento por canal lateral (*Data Leakage*), pois permitia que um aluno "adivinhasse" dados ocultos (como um CPF ou uma anotação privada do professor) digitando na busca. O código foi reescrito para montar uma *string pesquisável* filtrada dinamicamente com base nas permissões de cada perfil.
+
+### 4.4. Sessão e Proteção de Credenciais
+O **Timeout de Sessão por Inatividade (15min)** protege sessões autenticadas contra sequestro em terminais compartilhados. Quando esgotado, o `logout()` é invocado e os campos do formulário são apagados do DOM para impedir retenção de credenciais. 
+A ofuscação de senhas com *Base64* (`btoa/atob`) atua como mitigação primária para esconder dados em texto puro no repositório. Ressalta-se, porém, que o Base64 é reversível e, em produção, exigiria criptografia e algoritmos de Hash fortes (como bcrypt) geridos pelo back-end.
+
+### 4.5. Integridade dos Dados e Validação
+A validação de campos obrigatórios com `.trim()` protege o sistema contra entradas vazias. O checkbox de consentimento de privacidade atende aos preceitos da LGPD. Além disso, a obrigatoriedade de aceite em confirmações visuais (`confirm()`) em ações destrutivas (ex: exclusões) reforça a **Disponibilidade** dos dados contra erros operacionais acidentais.
 
 ---
 
-## 16. Observação final
+## 5. Limitações da Arquitetura Front-end
 
-Este projeto foi construído para provocar análise crítica.
+As medidas descritas representam defesas profundas em camada de apresentação (*Client-side*). No entanto, um aplicativo que opera unicamente sem Back-end e sem Banco de Dados isolado apresenta fraquezas estruturais intrínsecas:
 
-Em segurança da informação, não basta perguntar se o sistema “funciona”. É necessário perguntar:
-
-- o que ele protege;
-- de quem ele protege;
-- com qual controle;
-- com qual evidência;
-- com qual limite;
-- e com qual responsabilidade.
-
-A entrega esperada deve demonstrar essa forma de raciocínio.
+1. **Quebra de Integridade na Auditoria (Risco 6):** Os dados (sessão, ocorrências e logs de auditoria) residem no `localStorage`. Sendo assim, podem ser livremente apagados ou forjados por ferramentas de desenvolvedor (DevTools) no navegador local do usuário, rompendo a confiabilidade técnica dos registros.
+2. **Autenticação Simulada:** O sistema não troca chaves de sessão assinadas criptograficamente (como JWT), confiando apenas em validações e persistências locais, o que impede uma defesa rigorosa contra manipulação de estados.
