@@ -36,13 +36,12 @@ const ROLE_LABELS = {
 function maskCpf(cpf) {
   if (!cpf) return "—";
   const match = cpf.match(/^(\d{3})\.(\d{3})\.(\d{3})-(\d{2})$/);
-  if (match) return "***."+match[2]+"."+match[3]+"-**";
+  if (match) return "***." + match[2] + "." + match[3] + "-**";
   return "***.***.***-**";
 }
 
-// A2 — Risco 12: token removido do código-fonte.
+// A2 — Risco 12: FAKE_API_TOKEN removido do código-fonte.
 // Em produção, credenciais seriam gerenciadas no back-end via variável de ambiente.
-const FAKE_API_TOKEN = "";
 
 const STORAGE_KEYS = {
   session: "ocorrencias_sessao",
@@ -264,9 +263,9 @@ function createOccurrence(event) {
 
   // A3 — Risco 9: validação de campos obrigatórios
   const studentName = document.querySelector("#studentName").value.trim();
-  const studentId   = document.querySelector("#studentId").value.trim();
+  const studentId = document.querySelector("#studentId").value.trim();
   const description = document.querySelector("#description").value.trim();
-  const privacyAck  = document.querySelector("#privacyAck").checked;
+  const privacyAck = document.querySelector("#privacyAck").checked;
 
   if (!studentName || !studentId || !description) {
     alert("Preencha os campos obrigatórios: Nome do aluno, Matrícula e Descrição.");
@@ -278,19 +277,24 @@ function createOccurrence(event) {
     return;
   }
 
+  // A3 — Risco 9 / A1 — Risco 2: somente PROFESSOR e ADMIN podem criar ocorrências
   const session = getSession();
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "ADMIN")) {
+    alert("Acesso negado: apenas professores e administradores podem registrar ocorrências.");
+    return;
+  }
 
   const occurrence = {
     id: `OC-${Math.floor(Math.random() * 9000) + 1000}`,
-    studentName: document.querySelector("#studentName").value,
-    studentId: document.querySelector("#studentId").value,
-    studentCpf: document.querySelector("#studentCpf").value,
-    studentEmail: document.querySelector("#studentEmail").value,
-    studentPhone: document.querySelector("#studentPhone").value,
+    studentName: studentName,
+    studentId: studentId,
+    studentCpf: document.querySelector("#studentCpf").value.trim(),
+    studentEmail: document.querySelector("#studentEmail").value.trim(),
+    studentPhone: document.querySelector("#studentPhone").value.trim(),
     category: document.querySelector("#category").value,
     priority: document.querySelector("#priority").value,
-    description: document.querySelector("#description").value,
-    internalNote: document.querySelector("#internalNote").value,
+    description: description,
+    internalNote: document.querySelector("#internalNote").value.trim(),
     privacyAck: document.querySelector("#privacyAck").checked,
     status: "Aberta",
     createdBy: session ? session.email : "desconhecido",
@@ -311,6 +315,13 @@ function createOccurrence(event) {
 }
 
 function deleteOccurrence(id) {
+  // A1 — Risco 2/3: guard clause — somente ADMIN pode excluir
+  const session = getSession();
+  if (!session || session.role !== "ADMIN") {
+    alert("Acesso negado: apenas administradores podem excluir ocorrências.");
+    return;
+  }
+
   // A3 — Risco 10: confirmação obrigatória antes de excluir
   if (!confirm("Tem certeza que deseja excluir esta ocorrência? Esta ação não pode ser desfeita.")) {
     return;
@@ -326,6 +337,13 @@ function deleteOccurrence(id) {
 }
 
 function changeStatus(id, status) {
+  // A1 — Risco 2/3: guard clause — somente PROFESSOR e ADMIN podem alterar status
+  const session = getSession();
+  if (!session || (session.role !== "PROFESSOR" && session.role !== "ADMIN")) {
+    alert("Acesso negado: apenas professores e administradores podem alterar o status.");
+    return;
+  }
+
   const occurrences = getOccurrences();
   const occurrence = occurrences.find((item) => item.id === id);
 
@@ -342,7 +360,12 @@ function changeStatus(id, status) {
 }
 
 function exportEverything() {
+  // A1 — Risco 2/3: guard clause — somente ADMIN pode exportar
   const session = getSession();
+  if (!session || session.role !== "ADMIN") {
+    alert("Acesso negado: apenas administradores podem exportar dados.");
+    return;
+  }
   // A2 — Risco 5: exportação sanitizada — sem senhas, token ou cópia do localStorage
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -368,7 +391,25 @@ function exportEverything() {
 }
 
 function clearLogs() {
-  saveAuditLogs([]);
+  // A4 — Risco 7: guard clause — somente ADMIN pode limpar logs
+  const session = getSession();
+  if (!session || session.role !== "ADMIN") {
+    alert("Acesso negado: apenas administradores podem limpar os logs.");
+    return;
+  }
+
+  if (!confirm("Tem certeza que deseja limpar todo o histórico de logs?")) {
+    return;
+  }
+
+  // A4 — Risco 7: registra a ação de limpeza antes de apagar
+  saveAuditLogs([{
+    when: new Date().toISOString(),
+    user: session.email,
+    role: session.role,
+    action: "LOGS_LIMPOS",
+    detail: `Histórico de logs limpo pelo administrador ${session.name} (${session.email}).`
+  }]);
   render();
 }
 
@@ -485,4 +526,22 @@ searchInput.addEventListener("input", render);
 window.deleteOccurrence = deleteOccurrence;
 window.changeStatus = changeStatus;
 
+// A4 — Risco 8: timeout de sessão por inatividade (15 min)
+const SESSION_TIMEOUT_MS = 900000;
+let sessionTimer = null;
+
+function resetSessionTimer() {
+  if (sessionTimer) clearTimeout(sessionTimer);
+  if (!getSession()) return;
+  sessionTimer = setTimeout(function () {
+    alert("Sessão expirada por inatividade. Faça login novamente.");
+    logout();
+  }, SESSION_TIMEOUT_MS);
+}
+
+["mousemove", "keydown", "click"].forEach(function (evt) {
+  window.addEventListener(evt, resetSessionTimer);
+});
+
 boot();
+resetSessionTimer();
