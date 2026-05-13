@@ -7,7 +7,7 @@ const USERS = [
     id: 1,
     name: "Ana Souza",
     email: "aluno@faculdade.local",
-    password: "123456",
+    password: "MTIzNDU2",
     role: "ALUNO",
     studentId: "202400001"
   },
@@ -15,7 +15,7 @@ const USERS = [
     id: 2,
     name: "Prof. Carlos Lima",
     email: "professor@faculdade.local",
-    password: "123456",
+    password: "MTIzNDU2",
     role: "PROFESSOR",
     classes: ["5A", "5B"]
   },
@@ -23,7 +23,7 @@ const USERS = [
     id: 3,
     name: "Administrador Geral",
     email: "admin@faculdade.local",
-    password: "admin",
+    password: "YWRtaW4=",
     role: "ADMIN"
   }
 ];
@@ -226,7 +226,9 @@ function showApp(user) {
 }
 
 function login(email, password) {
-  const user = USERS.find((item) => item.email === email && item.password === password);
+  // A6 — Risco 1: compara senha digitada codificada em Base64 com o valor ofuscado no array USERS
+  const encoded = btoa(password);
+  const user = USERS.find((item) => item.email === email && item.password === encoded);
 
   if (!user) {
     alert("Usuário ou senha inválidos.");
@@ -243,6 +245,8 @@ function logout() {
   const session = getSession();
   writeLog("LOGOUT", session ? `${session.email} saiu do sistema.` : "Sessão encerrada.");
   localStorage.removeItem(STORAGE_KEYS.session);
+  // A6 — Risco 8: limpa credenciais retidas no DOM após logout
+  loginForm.reset();
   showLogin();
 }
 
@@ -260,6 +264,12 @@ function applyRBAC(role) {
 
   // Limpar logs: apenas ADMIN
   clearLogsBtn.classList.toggle("hidden", role !== "ADMIN");
+
+  // A6 — Riscos 2/3: seção de auditoria oculta para ALUNO
+  const auditSection = document.querySelector("#auditSection");
+  if (auditSection) {
+    auditSection.classList.toggle("hidden", role === "ALUNO");
+  }
 }
 
 function createOccurrence(event) {
@@ -513,10 +523,18 @@ function render() {
 
   const logs = getAuditLogs();
 
-  if (logs.length === 0) {
+  // A6 — Riscos 2/3: filtragem de logs conforme perfil
+  let visibleLogs = logs;
+  if (role === "PROFESSOR") {
+    visibleLogs = logs.filter((log) =>
+      log.role === "ALUNO" || log.role === "PROFESSOR"
+    );
+  }
+
+  if (visibleLogs.length === 0) {
     auditLog.innerHTML = `<div class="notice">Nenhum log registrado.</div>`;
   } else {
-    auditLog.innerHTML = logs.map((log) => `
+    auditLog.innerHTML = visibleLogs.map((log) => `
       <div class="log-item">
         <strong>${log.when}</strong><br />
         usuário=${log.user || "—"} | perfil=${log.role || "—"} | ação=${log.action}<br />
